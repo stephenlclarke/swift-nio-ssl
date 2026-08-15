@@ -1,4 +1,13 @@
-# SwiftNIO SSL
+<!-- markdownlint-disable MD033 -->
+<h1>
+  <img
+    alt="SwiftNIO SSL icon: frosted network lock"
+    src="assets/swift-nio-ssl-icon.png"
+    width="70"
+    valign="middle">
+  &nbsp;SwiftNIO SSL
+</h1>
+<!-- markdownlint-enable MD033 -->
 
 SwiftNIO SSL is a Swift package that contains an implementation of TLS based on BoringSSL. This package allows users of [SwiftNIO](https://github.com/apple/swift-nio) to write protocol clients and servers that use TLS to secure data in flight.
 
