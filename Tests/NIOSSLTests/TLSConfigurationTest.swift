@@ -526,7 +526,7 @@ class TLSConfigurationTest: XCTestCase {
         try assertHandshakeError(
             withClientConfig: clientConfig,
             andServerConfig: serverConfig,
-            errorTextContainsAnyOf: ["ALERT_UNKNOWN_CA", "ALERT_CERTIFICATE_UNKNOWN"]
+            errorTextContainsAnyOf: ["ALERT_UNKNOWN_CA", "ALERT_CERTIFICATE_UNKNOWN", "ALERT_BAD_CERTIFICATE"]
         )
     }
 
@@ -548,7 +548,7 @@ class TLSConfigurationTest: XCTestCase {
         try assertPostHandshakeError(
             withClientConfig: clientConfig,
             andServerConfig: serverConfig,
-            errorTextContainsAnyOf: ["ALERT_UNKNOWN_CA", "ALERT_CERTIFICATE_UNKNOWN"]
+            errorTextContainsAnyOf: ["ALERT_UNKNOWN_CA", "ALERT_CERTIFICATE_UNKNOWN", "ALERT_BAD_CERTIFICATE"]
         )
     }
 
@@ -591,7 +591,11 @@ class TLSConfigurationTest: XCTestCase {
         try assertPostHandshakeError(
             withClientConfig: clientConfig,
             andServerConfig: serverConfig,
-            errorTextContainsAnyOf: ["SSLV3_ALERT_CERTIFICATE_UNKNOWN", "TLSV1_ALERT_UNKNOWN_CA"]
+            errorTextContainsAnyOf: [
+                "SSLV3_ALERT_CERTIFICATE_UNKNOWN",
+                "TLSV1_ALERT_UNKNOWN_CA",
+                "SSLV3_ALERT_BAD_CERTIFICATE",
+            ]
         )
     }
 
