@@ -1072,7 +1072,7 @@ class TLSConfigurationTest: XCTestCase {
             XCTAssertNoThrow(try FileManager.default.removeItem(at: URL(string: "file://" + removePath)!))
         }
 
-        for numericExtension in [0, 1, 2, 9] {
+        for numericExtension in [0, 1, 2, 9, 10, 123] {
             let symlinkName = getRehashFilename(
                 path: rootCAPath,
                 testName: testName,
