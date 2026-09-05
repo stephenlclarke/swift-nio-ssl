@@ -804,7 +804,7 @@ extension NIOSSLContext {
             fileExtension.count == 1,
             filename.count == 8,
             filename.allSatisfy({ $0.isHexDigit }),
-            fileExtension.first == UInt8(ascii: "0")
+            fileExtension.allSatisfy({ $0.isDecimalDigit })
         else { return false }
 
         // Check if the element is a symlink. If it is not, return false.
@@ -967,7 +967,8 @@ internal class DirectoryContents: Sequence, IteratorProtocol {
     }
 }
 
-// Used as part of the `_isRehashFormat` format to determine if the filename is a hexadecimal filename.
+// Used as part of the `_isRehashFormat` format to determine whether the filename is a hexadecimal
+// filename and whether its extension is a decimal digit.
 extension UTF8.CodeUnit {
     private static let asciiZero = UInt8(ascii: "0")
     private static let asciiNine = UInt8(ascii: "9")
@@ -981,6 +982,15 @@ extension UTF8.CodeUnit {
         case (.asciiZero)...(.asciiNine),
             (.asciiLowercaseA)...(.asciiLowercaseF),
             (.asciiUppercaseA)...(.asciiUppercaseF):
+            return true
+        default:
+            return false
+        }
+    }
+
+    var isDecimalDigit: Bool {
+        switch self {
+        case (.asciiZero)...(.asciiNine):
             return true
         default:
             return false

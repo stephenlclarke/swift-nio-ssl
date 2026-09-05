@@ -999,9 +999,12 @@ class TLSConfigurationTest: XCTestCase {
         // Filename is not in rehash format.
         let acceptablePathBadFilename = try NIOSSLContext._isRehashFormat(path: "/etc/ssl/certs/myFile.pem")
         XCTAssertFalse(acceptablePathBadFilename)
-        // Filename is in bad rehash format.
+        // Filename is in bad rehash format: the extension is not a decimal digit.
         let acceptablePathBadRehashFormat = try NIOSSLContext._isRehashFormat(path: "/etc/ssl/certs/7f44456a.z")
         XCTAssertFalse(acceptablePathBadRehashFormat)
+        // Nor is a non-digit that happens to be a hex character.
+        let acceptablePathHexExtension = try NIOSSLContext._isRehashFormat(path: "/etc/ssl/certs/7f44456a.a")
+        XCTAssertFalse(acceptablePathHexExtension)
 
         // Test with an actual file, but no symlink.
         let dummyFile = try dumpToFile(data: Data(), fileExtension: ".txt", customPath: testName)
@@ -1043,6 +1046,51 @@ class TLSConfigurationTest: XCTestCase {
         // Test the success case for the symlink
         let successSymlink = try NIOSSLContext._isRehashFormat(path: rehashSymlinkName)
         XCTAssertTrue(successSymlink)
+    }
+
+    func testRehashFormatAcceptsCollisionSuffixes() throws {
+        // `openssl rehash` names its links "%08lx.%d": when several certificates share a subject
+        // name hash, the suffix is incremented rather than staying at 0. Every one of those links
+        // is in c_rehash format and must be recognised, otherwise the CAs behind the higher
+        // suffixes are silently left out of the client CA list.
+        let testName = String("\(#function)".dropLast(2))
+
+        let rootCAPath = try dumpToFile(
+            data: .init(customChain.rootPEM.utf8),
+            fileExtension: ".pem",
+            customPath: testName
+        )
+        let rootCAFilename = URL(string: "file://" + rootCAPath)!.lastPathComponent
+
+        var symlinks: [String] = []
+        defer {
+            for symlink in symlinks {
+                XCTAssertNoThrow(try FileManager.default.removeItem(at: URL(string: "file://" + symlink)!))
+            }
+            XCTAssertNoThrow(try FileManager.default.removeItem(at: URL(string: "file://" + rootCAPath)!))
+            let removePath = "\(FileManager.default.temporaryDirectory.path)/\(testName)/"
+            XCTAssertNoThrow(try FileManager.default.removeItem(at: URL(string: "file://" + removePath)!))
+        }
+
+        for numericExtension in [0, 1, 2, 9] {
+            let symlinkName = getRehashFilename(
+                path: rootCAPath,
+                testName: testName,
+                numericExtension: numericExtension
+            )
+            XCTAssertNoThrow(
+                try FileManager.default.createSymbolicLink(
+                    atPath: symlinkName,
+                    withDestinationPath: rootCAFilename
+                )
+            )
+            symlinks.append(symlinkName)
+
+            XCTAssertTrue(
+                try NIOSSLContext._isRehashFormat(path: symlinkName),
+                "\(symlinkName) is a valid c_rehash link and should be recognised"
+            )
+        }
     }
 
     func testNonexistentFileObject() throws {
