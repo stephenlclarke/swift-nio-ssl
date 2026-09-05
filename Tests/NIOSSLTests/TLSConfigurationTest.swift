@@ -1091,6 +1091,22 @@ class TLSConfigurationTest: XCTestCase {
                 "\(symlinkName) is a valid c_rehash link and should be recognised"
             )
         }
+
+        for malformedName in [".7f44456a.0", "7f44456a..0", "7f44456a.0.", "7f44456a."] {
+            let symlinkName = "\(FileManager.default.temporaryDirectory.path)/\(testName)/\(malformedName)"
+            XCTAssertNoThrow(
+                try FileManager.default.createSymbolicLink(
+                    atPath: symlinkName,
+                    withDestinationPath: rootCAFilename
+                )
+            )
+            symlinks.append(symlinkName)
+
+            XCTAssertFalse(
+                try NIOSSLContext._isRehashFormat(path: symlinkName),
+                "\(symlinkName) has extra separators and must be rejected"
+            )
+        }
     }
 
     func testNonexistentFileObject() throws {

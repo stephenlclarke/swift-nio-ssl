@@ -794,7 +794,10 @@ extension NIOSSLContext {
             lastPathComponent.count >= 10
         else { return false }
         // Split into filename parts HHHHHHHH.D -> [[HHHHHHHH], [D]]
-        let filenameParts = lastPathComponent.split(separator: UInt8(ascii: "."))
+        let filenameParts = lastPathComponent.split(
+            separator: UInt8(ascii: "."),
+            omittingEmptySubsequences: false
+        )
 
         // Double check that the extension did not fail to cast to an integer.
         // Make sure that the filename is an 8 character hex based file name.
@@ -803,6 +806,7 @@ extension NIOSSLContext {
             let fileExtension = filenameParts.last,
             filename.count == 8,
             filename.allSatisfy({ $0.isHexDigit }),
+            !fileExtension.isEmpty,
             fileExtension.allSatisfy({ $0.isDecimalDigit })
         else { return false }
 
