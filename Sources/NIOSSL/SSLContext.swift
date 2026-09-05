@@ -782,25 +782,28 @@ extension NIOSSLContext {
     /// Takes a path and determines if the file at this path is of c_rehash format .
     internal static func _isRehashFormat(path: String) throws -> Bool {
         // Check if the element’s name matches the c_rehash symlink name format.
-        // The links created are of the form HHHHHHHH.D, where each H is a hexadecimal character and D is a single decimal digit.
+        // The links created are of the form HHHHHHHH.D, where each H is a hexadecimal character and D is one or more decimal digits.
         let utf8PathView = path.utf8
         let utf8PathSplitView = utf8PathView.split(separator: UInt8(ascii: "/"))
 
-        // Make sure the path is at least 10 units long
+        // Make sure the path is at least 10 units long.
         guard let lastPathComponent = utf8PathSplitView.last,
-            lastPathComponent.count == 10
+            lastPathComponent.count >= 10
         else { return false }
         // Split into filename parts HHHHHHHH.D -> [[HHHHHHHH], [D]]
-        let filenameParts = lastPathComponent.split(separator: UInt8(ascii: "."))
+        let filenameParts = lastPathComponent.split(
+            separator: UInt8(ascii: "."),
+            omittingEmptySubsequences: false
+        )
 
         // Double check that the extension did not fail to cast to an integer.
         // Make sure that the filename is an 8 character hex based file name.
         guard filenameParts.count == 2,
             let filename = filenameParts.first,
             let fileExtension = filenameParts.last,
-            fileExtension.count == 1,
             filename.count == 8,
             filename.allSatisfy({ $0.isHexDigit }),
+            !fileExtension.isEmpty,
             fileExtension.allSatisfy({ $0.isDecimalDigit })
         else { return false }
 
