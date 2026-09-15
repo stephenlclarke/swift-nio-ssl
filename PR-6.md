@@ -8,7 +8,8 @@ policy and README reporting used by the rest of the Container family.
 ## Implementation
 
 - Add a project-scoped scanner configuration and previous-version policy validation.
-- Add a deterministic SwiftPM coverage converter with unit tests.
+- Export LLVM's native line-accurate LCOV data and deterministically convert it
+  to SonarQube generic coverage with unit tests.
 - Add local `make coverage`, `make sonar-scan`, and `make sonar` entry points.
 - Add an exact-revision GitHub workflow for pull requests, `main`, and manual recovery.
 - Retain coverage evidence and reject unresolved new-code issues or security hotspots.
@@ -18,6 +19,11 @@ policy and README reporting used by the rest of the Container family.
 
 - `make coverage`
 - `python3 -m unittest discover Tools/coverage`
+
+All 347 local package tests pass and the native report records 87.25%
+first-party line coverage (4,795 of 5,496 lines). The vendored BoringSSL C/C++
+and shim sources remain excluded from fork-maintained Swift metrics.
+
 - `actionlint .github/workflows/sonar.yml`
 - `markdownlint README.md ISSUE-*.md PR-*.md`
 - `git diff --check`

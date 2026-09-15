@@ -21,6 +21,7 @@ Package@-*.swift
 Package.resolved
 **/Package.resolved
 Makefile
+sonar-project.properties
 *.modulemap
 **/*.modulemap
 **/*.docc/*

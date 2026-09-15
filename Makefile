@@ -3,6 +3,7 @@ SHELL := /bin/bash
 
 SWIFT ?= swift
 PYTHON ?= python3
+LLVM_COV ?= $(shell xcrun --find llvm-cov 2>/dev/null || command -v llvm-cov)
 SONAR_QUALITYGATE_WAIT ?= true
 
 .PHONY: test coverage coverage-tools-test sonar sonar-scan clean
@@ -17,13 +18,29 @@ coverage: coverage-tools-test
 	$(SWIFT) test --enable-code-coverage
 	@coverage_report="$$($(SWIFT) test --show-codecov-path)"; \
 		test -s "$$coverage_report"; \
+		profile="$${coverage_report%/*}/default.profdata"; \
+		test -s "$$profile"; \
+		test -x "$(LLVM_COV)"; \
+		bin_path="$$($(SWIFT) build --show-bin-path)"; \
+		test_binaries=(); \
+		while IFS= read -r binary; do test_binaries+=("$$binary"); done < <( \
+			find "$$bin_path" -type f -perm -111 \
+			\( -name '*.xctest' -o -path '*.xctest/Contents/MacOS/*' \) \
+			-print | sort \
+		); \
+		test "$${#test_binaries[@]}" -gt 0; \
+		coverage_command=("$(LLVM_COV)" export -format=lcov \
+			-instr-profile="$$profile" "$${test_binaries[0]}"); \
+		for ((index = 1; index < $${#test_binaries[@]}; index++)); do \
+			coverage_command+=(-object "$${test_binaries[$$index]}"); \
+		done; \
+		"$${coverage_command[@]}" --sources Sources > coverage.lcov; \
 		$(PYTHON) Tools/coverage/swift_coverage.py \
 			--source-root "$(CURDIR)" \
 			--exclude-prefix Sources/CNIOBoringSSL \
 			--exclude-prefix Sources/CNIOBoringSSLShims \
-			--lcov-output coverage.lcov \
 			--sonar-output coverage.xml \
-			"$$coverage_report"
+			coverage.lcov
 
 sonar: coverage sonar-scan
 
