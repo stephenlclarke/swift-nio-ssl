@@ -24,6 +24,7 @@ Makefile
 *.modulemap
 **/*.modulemap
 **/*.docc/*
+assets/*.png
 *.xcprivacy
 **/*.xcprivacy
 *.symlink
