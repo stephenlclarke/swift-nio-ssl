@@ -1049,10 +1049,16 @@ class TLSConfigurationTest: XCTestCase {
     }
 
     func testRehashFormatAcceptsCollisionSuffixes() throws {
-        // `openssl rehash` names its links "%08lx.%d": when several certificates share a subject
-        // name hash, the suffix is incremented rather than staying at 0. Every one of those links
-        // is in c_rehash format and must be recognised, otherwise the CAs behind the higher
-        // suffixes are silently left out of the client CA list.
+        // `openssl rehash` names its links "%08x.%s%d", the infix being empty for certificates:
+        // when several certificates share a subject name hash, the id is incremented rather than
+        // staying at 0. Every one of those links is in c_rehash format and must be recognised,
+        // otherwise the CAs behind the higher ids are silently left out of the client CA list.
+        //
+        // The id is a plain %d, so it grows past one digit. `apps/rehash.c` caps a hash bucket at
+        // 256 entries (MAX_COLLISIONS), which makes 255 the largest id that tool can write. The
+        // older perl `tools/c_rehash.in`, still shipped on the 3.0 and 3.5 branches, has no such
+        // cap: its suffix loop just increments until it finds a free name. So the predicate
+        // deliberately accepts any number of digits rather than enforcing a ceiling of its own.
         let testName = String("\(#function)".dropLast(2))
 
         let rootCAPath = try dumpToFile(
@@ -1072,7 +1078,15 @@ class TLSConfigurationTest: XCTestCase {
             XCTAssertNoThrow(try FileManager.default.removeItem(at: URL(string: "file://" + removePath)!))
         }
 
-        for numericExtension in [0, 1, 2, 9, 10, 123] {
+        let acceptedSuffixes: [(id: Int, why: String)] = [
+            (0, "the first link for a hash"),
+            (1, "the first collision"),
+            (9, "the last single-digit id"),
+            (10, "the first two-digit id; a single-character check would drop it"),
+            (123, "an arbitrary id in the middle of the range"),
+            (255, "the largest id apps/rehash.c can write (MAX_COLLISIONS - 1)"),
+        ]
+        for (numericExtension, why) in acceptedSuffixes {
             let symlinkName = getRehashFilename(
                 path: rootCAPath,
                 testName: testName,
@@ -1088,12 +1102,31 @@ class TLSConfigurationTest: XCTestCase {
 
             XCTAssertTrue(
                 try NIOSSLContext._isRehashFormat(path: symlinkName),
-                "\(symlinkName) is a valid c_rehash link and should be recognised"
+                "\(symlinkName) is a valid c_rehash link (\(why)) and should be recognised"
             )
         }
 
-        for malformedName in [".7f44456a.0", "7f44456a..0", "7f44456a.0.", "7f44456a."] {
-            let symlinkName = "\(FileManager.default.temporaryDirectory.path)/\(testName)/\(malformedName)"
+        // Names that have the right characters but a shape `openssl rehash` never produces. They
+        // are real symlinks to a real certificate, so the name check is the only thing that can
+        // reject them.
+        //
+        // The first three depend on the split keeping empty subsequences: ".7f44456a.0",
+        // "7f44456a..0" and "7f44456a.0." each collapse to the same two parts as "7f44456a.0"
+        // when empty pieces are discarded, and would be accepted. The other three are rejected
+        // for reasons that do not involve the split at all: "7f44456a." by the !isEmpty check,
+        // "7f44456a.0.1" by yielding three parts under either behaviour, and "7f44456a.r0" by
+        // isDecimalDigit.
+        let rejectedNames: [(name: String, why: String)] = [
+            (".7f44456a.0", "leading period gives an empty first part"),
+            ("7f44456a..0", "doubled period gives an empty middle part"),
+            ("7f44456a.0.", "trailing period gives an empty last part"),
+            ("7f44456a.", "empty extension: openssl rehash always writes at least one digit"),
+            ("7f44456a.0.1", "two periods: three parts, not two"),
+            ("7f44456a.r0", "CRL link: the caller loads every accepted name as a PEM certificate"),
+        ]
+        let tempDirPath = FileManager.default.temporaryDirectory.path + "/" + testName + "/"
+        for (name, why) in rejectedNames {
+            let symlinkName = tempDirPath + name
             XCTAssertNoThrow(
                 try FileManager.default.createSymbolicLink(
                     atPath: symlinkName,
@@ -1104,7 +1137,7 @@ class TLSConfigurationTest: XCTestCase {
 
             XCTAssertFalse(
                 try NIOSSLContext._isRehashFormat(path: symlinkName),
-                "\(symlinkName) has extra separators and must be rejected"
+                "\(symlinkName) is not a name openssl rehash produces (\(why)) and must be rejected"
             )
         }
     }

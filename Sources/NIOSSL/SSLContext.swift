@@ -785,22 +785,31 @@ extension NIOSSLContext {
     /// Takes a path and determines if the file at this path is of c_rehash format .
     internal static func _isRehashFormat(path: String) throws -> Bool {
         // Check if the element’s name matches the c_rehash symlink name format.
-        // The links created are of the form HHHHHHHH.D, where each H is a hexadecimal character and D is one or more decimal digits.
+        // `openssl rehash` writes its links with `snprintf(..., "%08x.%s%d", ...)` (apps/rehash.c):
+        // eight hex characters, a period, a type infix that is empty for certificates and "r" for
+        // CRLs, and a decimal collision id that starts at 0 and counts up for every further
+        // certificate sharing the same subject name hash. The id is a plain %d, not one character,
+        // so ".10" and beyond are ordinary names and must be recognised here.
         let utf8PathView = path.utf8
         let utf8PathSplitView = utf8PathView.split(separator: UInt8(ascii: "/"))
 
-        // Make sure the path is at least 10 units long.
-        guard let lastPathComponent = utf8PathSplitView.last,
-            lastPathComponent.count >= 10
-        else { return false }
-        // Split into filename parts HHHHHHHH.D -> [[HHHHHHHH], [D]]
+        guard let lastPathComponent = utf8PathSplitView.last else { return false }
+
+        // Split into filename parts HHHHHHHH.D -> [[HHHHHHHH], [D]].
+        //
+        // The split must keep empty subsequences. With the default (omitting) behaviour a name
+        // such as "7f44456a..0", ".7f44456a.0" or "7f44456a.0." collapses to the same two parts
+        // as "7f44456a.0" and would be accepted, even though it has a period in a position
+        // `openssl rehash` never puts one. Keeping the empty pieces makes every stray period show
+        // up in the part count or as an empty part, so the checks below can reject it.
         let filenameParts = lastPathComponent.split(
             separator: UInt8(ascii: "."),
             omittingEmptySubsequences: false
         )
 
-        // Double check that the extension did not fail to cast to an integer.
-        // Make sure that the filename is an 8 character hex based file name.
+        // Exactly one period, an 8 character hex filename before it and at least one decimal digit
+        // after it. No separate length check on the whole name is needed: those three conditions
+        // already pin it to 8 + 1 + digits.
         guard filenameParts.count == 2,
             let filename = filenameParts.first,
             let fileExtension = filenameParts.last,
@@ -821,7 +830,8 @@ extension NIOSSLContext {
         #endif
 
         // Return true at this point because the file format is considered to be in rehash format and a symlink.
-        // Rehash format being "%08lx.%d" or HHHHHHHH.D
+        // Rehash format being "%08x.%s%d" with an empty infix, or HHHHHHHH.D where D is one or
+        // more decimal digits.
         return true
     }
 }
