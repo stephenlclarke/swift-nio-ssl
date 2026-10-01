@@ -4,6 +4,15 @@
 <p>
   <img align="left" hspace="20" src="assets/swift-nio-ssl-icon.png" width="147" alt="SwiftNIO SSL icon: a frosted network lock overlapping the standard three-row container service panel" />
   <a href="https://github.com/stephenlclarke/swift-nio-ssl/actions/workflows/main.yml?query=branch%3Amain"><img alt="CI" src="https://github.com/stephenlclarke/swift-nio-ssl/actions/workflows/main.yml/badge.svg?branch=main" /></a>
+  <a href="https://github.com/stephenlclarke/swift-nio-ssl/actions/workflows/sonar.yml?query=branch%3Amain"><img alt="SonarQube" src="https://github.com/stephenlclarke/swift-nio-ssl/actions/workflows/sonar.yml/badge.svg?branch=main" /></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=stephenlclarke_swift-nio-ssl"><img alt="Quality Gate Status" src="https://sonarcloud.io/api/project_badges/measure?project=stephenlclarke_swift-nio-ssl&amp;metric=alert_status" /></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=stephenlclarke_swift-nio-ssl"><img alt="Coverage" src="https://sonarcloud.io/api/project_badges/measure?project=stephenlclarke_swift-nio-ssl&amp;metric=coverage" /></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=stephenlclarke_swift-nio-ssl"><img alt="Bugs" src="https://sonarcloud.io/api/project_badges/measure?project=stephenlclarke_swift-nio-ssl&amp;metric=bugs" /></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=stephenlclarke_swift-nio-ssl"><img alt="Code Smells" src="https://sonarcloud.io/api/project_badges/measure?project=stephenlclarke_swift-nio-ssl&amp;metric=code_smells" /></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=stephenlclarke_swift-nio-ssl"><img alt="Security Rating" src="https://sonarcloud.io/api/project_badges/measure?project=stephenlclarke_swift-nio-ssl&amp;metric=security_rating" /></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=stephenlclarke_swift-nio-ssl"><img alt="Maintainability Rating" src="https://sonarcloud.io/api/project_badges/measure?project=stephenlclarke_swift-nio-ssl&amp;metric=sqale_rating" /></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=stephenlclarke_swift-nio-ssl"><img alt="Duplicated Lines" src="https://sonarcloud.io/api/project_badges/measure?project=stephenlclarke_swift-nio-ssl&amp;metric=duplicated_lines_density" /></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=stephenlclarke_swift-nio-ssl"><img alt="Lines of Code" src="https://sonarcloud.io/api/project_badges/measure?project=stephenlclarke_swift-nio-ssl&amp;metric=ncloc" /></a>
   <img alt="Repo Visitors" src="https://visitor-badge.laobi.icu/badge?page_id=stephenlclarke.swift-nio-ssl" />
 </p>
 <br clear="left" />
@@ -13,6 +22,8 @@
 SwiftNIO SSL is a Swift package that contains an implementation of TLS based on BoringSSL. This package allows users of [SwiftNIO](https://github.com/apple/swift-nio) to write protocol clients and servers that use TLS to secure data in flight.
 
 The `stephenlclarke` fork carries the reviewed TLS corrections selected by the matched [`container-compose`](https://github.com/stephenlclarke/container-compose) development stack. Apple's [`swift-nio-ssl`](https://github.com/apple/swift-nio-ssl) remains the upstream source of truth; fork changes are kept narrow and prepared for upstream contribution. The current selected revision and compatibility status are recorded in the Container family's [STATUS.md](https://github.com/stephenlclarke/container-compose/blob/main/docs/project/STATUS.md).
+
+`make coverage` runs the package tests with instrumentation and produces LCOV plus SonarQube generic coverage reports. `make sonar-scan` submits the reports with the exact checked-out commit as the project version; the hosted SonarQube workflow performs the same analysis for pull requests and `main`.
 
 The name is inspired primarily by the names of the library this package uses (BoringSSL), and not because we don't know the name of the protocol. We know the protocol is TLS!
 
