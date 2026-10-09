@@ -16,6 +16,8 @@ The `stephenlclarke` fork carries the reviewed TLS corrections selected by the m
 
 On Darwin, the internal Security.framework certificate verifier rejects an untrusted peer through BoringSSL's default alert selection, matching the upstream TLS tests. This changes only the alert sent for a failed verification; it does not accept an untrusted certificate. Public custom verification callbacks retain their existing alert behavior.
 
+Linux integration checks use GNU `readelf` from `binutils` to require a non-executable `GNU_STACK` program header in both debug and release server binaries. Missing or executable stack metadata fails the check.
+
 The name is inspired primarily by the names of the library this package uses (BoringSSL), and not because we don't know the name of the protocol. We know the protocol is TLS!
 
 To get started, check out the [API docs](https://swiftpackageindex.com/apple/swift-nio-ssl/main/documentation/niossl).

@@ -16,7 +16,7 @@ ENV LANGUAGE en_US.UTF-8
 RUN apt-get update && apt-get install -y wget
 RUN apt-get update && apt-get install -y lsof dnsutils netcat-openbsd net-tools expect curl jq # used by integration tests
 RUN apt-get update && apt-get install -y libssl-dev
-RUN apt-get update && apt-get install -y execstack
+RUN apt-get update && apt-get install -y binutils
 
 # tools
 RUN mkdir -p $HOME/.tools
