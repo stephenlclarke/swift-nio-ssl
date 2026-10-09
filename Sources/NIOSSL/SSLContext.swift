@@ -550,8 +550,7 @@ public final class NIOSSLContext {
                         } catch {
                             $0.fail(error)
                         }
-                    },
-                    failureAlert: CNIOBoringSSLShims_SSL_AD_BAD_CERTIFICATE()
+                    }
                 )
             )
         case .some(.certificates), .some(.file):
