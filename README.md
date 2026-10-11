@@ -14,7 +14,7 @@ SwiftNIO SSL is a Swift package that contains an implementation of TLS based on 
 
 The `stephenlclarke` fork carries the reviewed TLS corrections selected by the matched [`container-compose`](https://github.com/stephenlclarke/container-compose) development stack. Apple's [`swift-nio-ssl`](https://github.com/apple/swift-nio-ssl) remains the upstream source of truth; fork changes are kept narrow and prepared for upstream contribution. The current selected revision and compatibility status are recorded in the Container family's [STATUS.md](https://github.com/stephenlclarke/container-compose/blob/main/docs/project/STATUS.md).
 
-On Darwin, the internal Security.framework certificate verifier rejects an untrusted peer through BoringSSL's default alert selection, matching the upstream TLS tests. This changes only the alert sent for a failed verification; it does not accept an untrusted certificate. Public custom verification callbacks retain their existing alert behavior.
+On Darwin, the internal Security.framework verifier sends `bad_certificate` when a client rejects an untrusted server certificate. Server-side client-certificate rejection and public custom verification callbacks leave alert selection to BoringSSL. Verification still rejects the untrusted certificate.
 
 Linux integration checks use GNU `readelf` from `binutils` to require a non-executable `GNU_STACK` program header in both debug and release server binaries. Missing or executable stack metadata fails the check.
 
