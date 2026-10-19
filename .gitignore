@@ -1,5 +1,9 @@
 .DS_Store
 /.build
+/.scannerwork
+/coverage.lcov
+/coverage.xml
+__pycache__/
 */.build
 /Packages
 /*.xcodeproj
