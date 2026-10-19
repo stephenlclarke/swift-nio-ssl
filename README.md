@@ -31,7 +31,7 @@ Linux integration checks use GNU `readelf` from `binutils` to require a non-exec
 
 Hosted Linux benchmarks retain separate p90 allocation-count thresholds for each supported Swift toolchain, including Swift 6.4. A missing toolchain threshold fails the check rather than silently accepting a new baseline.
 
-`make coverage` runs the package tests with instrumentation and produces LCOV plus SonarQube generic coverage reports. `make sonar-scan` submits the reports with the exact checked-out commit as the project version; the hosted SonarQube workflow performs the same analysis for pull requests and `main`.
+`make coverage` runs the package tests with instrumentation and binds the generated reports to the clean source revision and report checksum. `make sonar-scan` rejects stale or modified coverage, uses the exact checked-out commit as the project version, and supplies the current local branch explicitly. Local detached checkouts are rejected; supported GitHub Actions analyses keep automatic pull-request context.
 
 The name is inspired primarily by the names of the library this package uses (BoringSSL), and not because we don't know the name of the protocol. We know the protocol is TLS!
 

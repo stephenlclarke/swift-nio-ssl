@@ -15,3 +15,7 @@ DerivedData
 /.idea
 .swiftpm
 .vscode
+
+# Exact-source local coverage admission.
+coverage.source-revision
+coverage.xml.sha256
