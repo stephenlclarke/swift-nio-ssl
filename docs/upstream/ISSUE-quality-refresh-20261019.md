@@ -11,3 +11,5 @@ Record the clean source revision before coverage generation and verify it again 
 ## Compatibility
 
 Old coverage needs one regeneration to create provenance sidecars. No threshold, source exclusion or baseline changes. See [implementation](PR-quality-refresh-20261019.md).
+
+The refreshed upstream source also reports three unused `bio` callback parameters in Sonar. Preserve their required C callback signatures and argument labels while explicitly marking the parameters unused; this changes no runtime behavior.

@@ -117,7 +117,7 @@ internal func boringSSLBIOPutsFunc(bio: OpaquePointer?, buf: UnsafePointer<CChar
 /// len I'd like a buffer pointer), but this interface is required because this is passed to an BoringSSL
 /// function pointer and so needs to be @convention(c).
 internal func boringSSLBIOGetsFunc(
-    bio: OpaquePointer?,
+    bio _: OpaquePointer?,
     buf: UnsafeMutablePointer<CChar>?,
     len: CInt
 ) -> CInt {
@@ -144,11 +144,11 @@ internal func boringSSLBIOCtrlFunc(
     }
 }
 
-internal func boringSSLBIOCreateFunc(bio: OpaquePointer?) -> CInt {
+internal func boringSSLBIOCreateFunc(bio _: OpaquePointer?) -> CInt {
     1
 }
 
-internal func boringSSLBIODestroyFunc(bio: OpaquePointer?) -> CInt {
+internal func boringSSLBIODestroyFunc(bio _: OpaquePointer?) -> CInt {
     1
 }
 

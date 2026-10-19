@@ -11,3 +11,5 @@ The actual Make target is exercised with an isolated scanner double for valid lo
 ## Compatibility and risks
 
 Supported GitHub Actions retains automatic pull-request context. The scanner token is supplied only through the environment. Existing measured coverage shortfalls remain visible. Related: [issue](ISSUE-quality-refresh-20261019.md) and [PR 6](https://github.com/stephenlclarke/swift-nio-ssl/pull/6).
+
+The refreshed upstream source also reports three unused `bio` callback parameters in Sonar. Preserve their required C callback signatures and argument labels while explicitly marking the parameters unused; this changes no runtime behavior.
