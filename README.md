@@ -4,6 +4,15 @@
 <p>
   <img align="left" hspace="20" src="assets/swift-nio-ssl-icon.png" width="147" alt="SwiftNIO SSL icon: a frosted network lock overlapping the standard three-row container service panel" />
   <a href="https://github.com/stephenlclarke/swift-nio-ssl/actions/workflows/main.yml?query=branch%3Amain"><img alt="CI" src="https://github.com/stephenlclarke/swift-nio-ssl/actions/workflows/main.yml/badge.svg?branch=main" /></a>
+  <a href="https://github.com/stephenlclarke/swift-nio-ssl/actions/workflows/sonar.yml?query=branch%3Amain"><img alt="SonarQube" src="https://github.com/stephenlclarke/swift-nio-ssl/actions/workflows/sonar.yml/badge.svg?branch=main" /></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=stephenlclarke_swift-nio-ssl"><img alt="Quality Gate Status" src="https://sonarcloud.io/api/project_badges/measure?project=stephenlclarke_swift-nio-ssl&amp;metric=alert_status" /></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=stephenlclarke_swift-nio-ssl"><img alt="Coverage" src="https://sonarcloud.io/api/project_badges/measure?project=stephenlclarke_swift-nio-ssl&amp;metric=coverage" /></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=stephenlclarke_swift-nio-ssl"><img alt="Bugs" src="https://sonarcloud.io/api/project_badges/measure?project=stephenlclarke_swift-nio-ssl&amp;metric=bugs" /></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=stephenlclarke_swift-nio-ssl"><img alt="Code Smells" src="https://sonarcloud.io/api/project_badges/measure?project=stephenlclarke_swift-nio-ssl&amp;metric=code_smells" /></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=stephenlclarke_swift-nio-ssl"><img alt="Security Rating" src="https://sonarcloud.io/api/project_badges/measure?project=stephenlclarke_swift-nio-ssl&amp;metric=security_rating" /></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=stephenlclarke_swift-nio-ssl"><img alt="Maintainability Rating" src="https://sonarcloud.io/api/project_badges/measure?project=stephenlclarke_swift-nio-ssl&amp;metric=sqale_rating" /></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=stephenlclarke_swift-nio-ssl"><img alt="Duplicated Lines" src="https://sonarcloud.io/api/project_badges/measure?project=stephenlclarke_swift-nio-ssl&amp;metric=duplicated_lines_density" /></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=stephenlclarke_swift-nio-ssl"><img alt="Lines of Code" src="https://sonarcloud.io/api/project_badges/measure?project=stephenlclarke_swift-nio-ssl&amp;metric=ncloc" /></a>
   <img alt="Repo Visitors" src="https://visitor-badge.laobi.icu/badge?page_id=stephenlclarke.swift-nio-ssl" />
 </p>
 <br clear="left" />
@@ -16,9 +25,13 @@ The `stephenlclarke` fork carries the reviewed TLS corrections selected by the m
 
 On Darwin, the internal Security.framework certificate verifier rejects an untrusted peer through BoringSSL's default alert selection, matching the upstream TLS tests. This changes only the alert sent for a failed verification; it does not accept an untrusted certificate. Public custom verification callbacks retain their existing alert behavior.
 
+The fork includes the current upstream BoringSSL update and closed-channel write fix. Internal verification returns an optional alert value alongside its result, keeping pointer writes at the BoringSSL callback boundary. This refactoring preserves the fork's existing Darwin and public-callback alert policy.
+
 Linux integration checks use GNU `readelf` from `binutils` to require a non-executable `GNU_STACK` program header in both debug and release server binaries. Missing or executable stack metadata fails the check.
 
 Hosted Linux benchmarks retain separate p90 allocation-count thresholds for each supported Swift toolchain, including Swift 6.4. A missing toolchain threshold fails the check rather than silently accepting a new baseline.
+
+`make coverage` runs the package tests with instrumentation and binds the generated reports to the clean source revision and report checksum. `make sonar-scan` rejects stale or modified coverage, uses the exact checked-out commit as the project version, and supplies the current local branch explicitly. Local detached checkouts are rejected; supported GitHub Actions analyses keep automatic pull-request context.
 
 The name is inspired primarily by the names of the library this package uses (BoringSSL), and not because we don't know the name of the protocol. We know the protocol is TLS!
 

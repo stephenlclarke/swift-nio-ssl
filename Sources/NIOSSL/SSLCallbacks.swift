@@ -376,7 +376,7 @@ extension CustomContextManager {
             }
 
             // Construct extension values to be passed to callback
-            let cServerHostname = CNIOBoringSSL_SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name)
+            let cServerHostname = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name)
             let serverHostname = cServerHostname.map { String(cString: $0) }
             let values = NIOSSLClientExtensionValues(serverHostname: serverHostname)
 
@@ -495,26 +495,20 @@ extension CustomVerifyManager {
 }
 
 extension CustomVerifyManager {
-    mutating func process(
-        on connection: SSLConnection,
-        outAlert: UnsafeMutablePointer<UInt8>?
-    ) -> ssl_verify_result_t {
+    mutating func process(on connection: SSLConnection) -> (result: ssl_verify_result_t, alert: UInt8?) {
         // First, check if we have a result.
         switch self.result {
         case .complete(.certificateVerified):
-            return ssl_verify_ok
+            return (ssl_verify_ok, nil)
         case .completeWithMetadata(.certificateVerified(let metadata)):
             // Extract the metadata and store it within `self`.
             self.verificationMetadata = metadata
-            return ssl_verify_ok
+            return (ssl_verify_ok, nil)
         case .complete(.failed), .completeWithMetadata(.failed):
-            if let failureAlert = self.failureAlert {
-                outAlert?.pointee = failureAlert
-            }
-            return ssl_verify_invalid
+            return (ssl_verify_invalid, self.failureAlert)
         case .pendingResult:
             // Ask me again.
-            return ssl_verify_retry
+            return (ssl_verify_retry, nil)
         case .notStarted:
             // The rest of this method handles this case.
             break
@@ -525,7 +519,7 @@ extension CustomVerifyManager {
         // Ok, no result. We must invoke the callback.
         self.callback.invoke(on: connection)
 
-        return ssl_verify_retry
+        return (ssl_verify_retry, nil)
     }
 }
 
