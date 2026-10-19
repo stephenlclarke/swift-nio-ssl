@@ -1,12 +1,27 @@
+#!/usr/bin/env python3
+##===----------------------------------------------------------------------===##
+##
+## This source file is part of the SwiftNIO open source project
+##
+## Copyright (c) 2026 Apple Inc. and the SwiftNIO project authors
+## Licensed under Apache License v2.0
+##
+## See LICENSE.txt for license information
+## See CONTRIBUTORS.txt for the list of SwiftNIO project authors
+##
+## SPDX-License-Identifier: Apache-2.0
+##
+##===----------------------------------------------------------------------===##
+
 """Exercise local scan admission through the actual Make target."""
 
 import hashlib
 import os
-from pathlib import Path
 import shutil
 import subprocess
 import tempfile
 import unittest
+from pathlib import Path
 
 
 class SonarScanTests(unittest.TestCase):
@@ -18,8 +33,11 @@ class SonarScanTests(unittest.TestCase):
         shutil.copy2(Path(__file__).resolve().parents[2] / "Makefile", self.root)
         self.git("init", "--quiet", "--initial-branch=feature/coverage")
         self.git("add", "Makefile")
-        self.git("-c", "commit.gpgsign=false", "-c", "user.name=Test",
-                 "-c", "user.email=test@example.invalid", "commit", "--quiet", "-m", "test: fixture")
+        self.git(
+            "-c", "commit.gpgsign=false", "-c", "user.name=Test",
+            "-c", "user.email=test@example.invalid", "commit", "--quiet",
+            "-m", "test: fixture",
+        )
         self.head = self.git("rev-parse", "HEAD")
         self.report = self.root / "coverage.xml"
         self.report.write_text('<coverage version="1"/>\n')
@@ -32,13 +50,19 @@ class SonarScanTests(unittest.TestCase):
         scanner.write_text('#!/bin/sh\nprintf "%s\\n" "$@" > "$SCAN_TEST_OUTPUT"\n')
         scanner.chmod(0o700)
         # Shell startup hooks must not replace the scanner double's PATH.
-        self.environment = {key: value for key, value in os.environ.items()
-                            if key in {"PATH", "HOME", "TMPDIR", "LANG", "LC_ALL"}}
-        self.environment.update(PATH=str(binary) + os.pathsep + self.environment["PATH"],
-                                SONAR_TOKEN="fixture-only", SCAN_TEST_OUTPUT=str(self.output))
+        self.environment = {
+            key: value for key, value in os.environ.items()
+            if key in {"PATH", "HOME", "TMPDIR", "LANG", "LC_ALL"}
+        }
+        self.environment.update(
+            PATH=str(binary) + os.pathsep + self.environment["PATH"],
+            SONAR_TOKEN="fixture-only", SCAN_TEST_OUTPUT=str(self.output),
+        )
 
     def git(self, *arguments):
-        return subprocess.check_output(["git", *arguments], cwd=self.root, text=True).strip()
+        return subprocess.check_output(
+            ["git", *arguments], cwd=self.root, text=True
+        ).strip()
 
     def scan(self):
         return subprocess.run(["make", "--no-print-directory", "sonar-scan"],
