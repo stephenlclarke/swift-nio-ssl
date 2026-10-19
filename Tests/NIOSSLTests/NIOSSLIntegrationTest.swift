@@ -690,17 +690,17 @@ class NIOSSLIntegrationTest: XCTestCase {
         let fileName = try makeTemporaryFile(fileExtension: ".pem")
         let tempFile = open(fileName, O_RDWR | O_CREAT | O_TRUNC | O_CLOEXEC, 0o644)
         precondition(tempFile > 1, String(cString: strerror(errno)))
-        let fileBio = CNIOBoringSSL_BIO_new_fp(fdopen(tempFile, "w+"), BIO_CLOSE)
+        let fileBio = BIO_new_fp(fdopen(tempFile, "w+"), BIO_CLOSE)
         precondition(fileBio != nil)
 
         let manager = BoringSSLPassphraseCallbackManager { closure in closure(passphrase.utf8) }
         let rc = withExtendedLifetime(manager) { manager -> CInt in
             let userData = Unmanaged.passUnretained(manager).toOpaque()
             return key.withUnsafeMutableEVPPKEYPointer { ref in
-                CNIOBoringSSL_PEM_write_bio_PrivateKey(
+                PEM_write_bio_PrivateKey(
                     fileBio,
                     ref,
-                    CNIOBoringSSL_EVP_aes_256_cbc(),
+                    EVP_aes_256_cbc(),
                     nil,
                     0,
                     globalBoringSSLPassphraseCallback,
@@ -708,7 +708,7 @@ class NIOSSLIntegrationTest: XCTestCase {
                 )
             }
         }
-        CNIOBoringSSL_BIO_free(fileBio)
+        BIO_free(fileBio)
         precondition(rc == 1)
         return fileName
     }
@@ -722,13 +722,13 @@ class NIOSSLIntegrationTest: XCTestCase {
             open(ptr, O_RDWR | O_CREAT | O_TRUNC | O_CLOEXEC, 0o644)
         }
         precondition(tempFile > 1, String(cString: strerror(errno)))
-        let fileBio = CNIOBoringSSL_BIO_new_fp(fdopen(tempFile, "w+"), BIO_CLOSE)
+        let fileBio = BIO_new_fp(fdopen(tempFile, "w+"), BIO_CLOSE)
         precondition(fileBio != nil)
 
         let rc = NIOSSLIntegrationTest.cert.withUnsafeMutableX509Pointer { ref in
-            CNIOBoringSSL_PEM_write_bio_X509(fileBio, ref)
+            PEM_write_bio_X509(fileBio, ref)
         }
-        CNIOBoringSSL_BIO_free(fileBio)
+        BIO_free(fileBio)
         precondition(rc == 1)
         return try fn(fileName)
     }
@@ -3883,5 +3883,74 @@ class NIOSSLIntegrationTest: XCTestCase {
             error in
             XCTAssertEqual(error as? ChannelError, .ioOnClosedChannel)
         }
+    }
+
+    func testFlushFromErrorCaughtAfterHandshakeEOFDoesNotSpin() throws {
+        try self.assertFlushAfterHandshakeEOFDoesNotSpin(halfClosure: false)
+    }
+
+    func testFlushFromErrorCaughtAfterHandshakeHalfClosureDoesNotSpin() throws {
+        try self.assertFlushAfterHandshakeEOFDoesNotSpin(halfClosure: true)
+    }
+
+    func testFlushBeforeCloseAfterHandshakeEOFDoesNotSpin() throws {
+        try self.assertFlushAfterHandshakeEOFDoesNotSpin(halfClosure: false, closeAfterFlush: true)
+    }
+
+    private func assertFlushAfterHandshakeEOFDoesNotSpin(
+        halfClosure: Bool,
+        closeAfterFlush: Bool = false
+    ) throws {
+        final class FlushOnError: ChannelInboundHandler {
+            typealias InboundIn = ByteBuffer
+            typealias OutboundOut = ByteBuffer
+
+            private let writePromise: EventLoopPromise<Void>
+            private let closeAfterFlush: Bool
+
+            init(writePromise: EventLoopPromise<Void>, closeAfterFlush: Bool) {
+                self.writePromise = writePromise
+                self.closeAfterFlush = closeAfterFlush
+            }
+
+            func channelActive(context: ChannelHandlerContext) {
+                context.writeAndFlush(
+                    self.wrapOutboundOut(context.channel.allocator.buffer(string: "pending write")),
+                    promise: self.writePromise
+                )
+                context.fireChannelActive()
+            }
+
+            func errorCaught(context: ChannelHandlerContext, error: Error) {
+                context.flush()
+                if self.closeAfterFlush {
+                    context.close(promise: nil)
+                }
+                context.fireErrorCaught(error)
+            }
+        }
+
+        let eventLoop = EmbeddedEventLoop()
+        let writePromise = eventLoop.makePromise(of: Void.self)
+        let channel = EmbeddedChannel(
+            handlers: [
+                NIOSSLServerHandler(context: try self.configuredSSLContext()),
+                FlushOnError(writePromise: writePromise, closeAfterFlush: closeAfterFlush),
+            ],
+            loop: eventLoop
+        )
+        try channel.connect(to: .init(ipAddress: "127.0.0.1", port: 443)).wait()
+
+        if halfClosure {
+            channel.pipeline.fireUserInboundEventTriggered(ChannelEvent.inputClosed)
+        } else {
+            channel.pipeline.fireChannelInactive()
+        }
+        eventLoop.run()
+
+        XCTAssertThrowsError(try writePromise.futureResult.wait()) { error in
+            XCTAssertEqual(error as? ChannelError, .ioOnClosedChannel)
+        }
+        XCTAssertNil(try channel.readOutbound(as: ByteBuffer.self))
     }
 }

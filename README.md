@@ -16,6 +16,8 @@ The `stephenlclarke` fork carries the reviewed TLS corrections selected by the m
 
 On Darwin, the internal Security.framework certificate verifier rejects an untrusted peer through BoringSSL's default alert selection, matching the upstream TLS tests. This changes only the alert sent for a failed verification; it does not accept an untrusted certificate. Public custom verification callbacks retain their existing alert behavior.
 
+The fork includes the current upstream BoringSSL update and closed-channel write fix. Internal verification returns an optional alert value alongside its result, keeping pointer writes at the BoringSSL callback boundary. This refactoring preserves the fork's existing Darwin and public-callback alert policy.
+
 Linux integration checks use GNU `readelf` from `binutils` to require a non-executable `GNU_STACK` program header in both debug and release server binaries. Missing or executable stack metadata fails the check.
 
 Hosted Linux benchmarks retain separate p90 allocation-count thresholds for each supported Swift toolchain, including Swift 6.4. A missing toolchain threshold fails the check rather than silently accepting a new baseline.

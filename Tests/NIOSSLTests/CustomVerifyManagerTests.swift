@@ -12,11 +12,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-@_implementationOnly import CNIOBoringSSL
-@_implementationOnly import CNIOBoringSSLShims
 import NIOCore
 import NIOEmbedded
 import XCTest
+
+@_implementationOnly import CNIOBoringSSL
+@_implementationOnly import CNIOBoringSSLShims
 
 @testable import NIOSSL
 
@@ -43,14 +44,20 @@ final class CustomVerifyManagerTests: XCTestCase {
         connection.customVerificationManager = manager
 
         var alert = self.unchangedAlert
-        let first = connection.customVerificationManager!.process(on: connection, outAlert: &alert)
+        let (first, firstAlert) = connection.customVerificationManager!.process(on: connection)
+        if let firstAlert {
+            alert = firstAlert
+        }
 
         guard runEventLoop else {
             return (first, nil, alert)
         }
 
         eventLoop.run()
-        let second = connection.customVerificationManager!.process(on: connection, outAlert: &alert)
+        let (second, secondAlert) = connection.customVerificationManager!.process(on: connection)
+        if let secondAlert {
+            alert = secondAlert
+        }
         return (first, second, alert)
     }
 
