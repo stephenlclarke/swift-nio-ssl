@@ -12,10 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-import NIOCore
-
 @_implementationOnly import CNIOBoringSSL
 @_implementationOnly import CNIOBoringSSLShims
+import NIOCore
 
 internal let SSL_MAX_RECORD_SIZE = 16 * 1024
 

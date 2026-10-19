@@ -12,12 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+@_implementationOnly import CNIOBoringSSL
+@_implementationOnly import CNIOBoringSSLShims
 import NIOCore
 import NIOEmbedded
 import XCTest
-
-@_implementationOnly import CNIOBoringSSL
-@_implementationOnly import CNIOBoringSSLShims
 
 @testable import NIOSSL
 
